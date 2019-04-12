@@ -46,9 +46,7 @@ acled <- dbGetQuery(con, "select * from ev.acled") %>%
     adm2_code = geo_inside(longitude, latitude, polygons, GID_2)
   )
 
-
-sub <- acled %>% distinct(event_type)
-  
+## Filter ACLED data based on task, aggregate up to ADM2-month level
 
 acled_filtered <- acled %>% 
   filter(
@@ -65,6 +63,8 @@ acled_filtered <- acled %>%
   ) %>% 
   ungroup()
 
+## Load data on when ACLED data starts per country
+
 acled_start <- read_csv("data/acled_start_month_apr19_version.csv") %>% 
   mutate(
     Country = ifelse(Country == "Eswatini", "Swaziland", Country),
@@ -74,9 +74,13 @@ acled_start <- read_csv("data/acled_start_month_apr19_version.csv") %>%
   ) %>% 
   select(iso3c, month_start)
 
+## Create monthly rack
+
 months = tibble(
   month_conflict = seq(ymd('1997-01-01'), ymd('2019-04-01'), by = 'month')
 )
+
+## Create rack of ADM2 regions
 
 gid2s <- polygons_df %>% 
   select(GID_0, GID_2) %>% 
@@ -84,9 +88,13 @@ gid2s <- polygons_df %>%
     iso3c = GID_0,
     adm2_code = GID_2)
 
+## Combine data on ACLED start dates per country and ADM2 regions of the countries
+
 rack <- merge(acled_start, months) %>% 
   filter(month_conflict >= month_start) %>% 
   left_join(gid2s)
+
+## Join rack with ACLED data, create a binary indicator of conflict with fatalities in ADM2, calculate 12 month variables
 
 acled_full <- left_join(rack, acled_filtered) %>% 
   mutate(
@@ -99,6 +107,6 @@ acled_full <- left_join(rack, acled_filtered) %>%
   mutate(
     fatalities_12m = rollsum(fatalities, 12, align = "left", fill = NA),
     count_12m = rollsum(count, 12, align = "left", fill = NA),
-    binary_12m = rollsum(binary, 12, align = "left", fill = NA)
+    binary_12m = rollmax(binary, 12, align = "left", fill = NA)
   ) %>% 
   ungroup()
