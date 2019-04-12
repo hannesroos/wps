@@ -120,7 +120,7 @@ acled_full <- left_join(rack, acled_filtered) %>%
 
 # Independent variable work
 
-## Ftiler data, aggregate to ADM2-month level, calculate number of fatalities and count of events per group
+## Filter data, aggregate to ADM2-month level, calculate number of fatalities and count of events per group
 
 acled_indep <- acled %>% 
   mutate(
@@ -147,7 +147,7 @@ acled_indep <- acled %>%
   ) %>% 
   ungroup()
 
-## 
+## Join with rack, calculate 12 month values
 
 wps_inputs <- distinct(acled_indep, wps_input)
 
@@ -167,6 +167,8 @@ acled_indep_full <- merge(rack, wps_inputs) %>%
   ) %>% 
   ungroup()
 
+## From long to wide data format
+
 acled_indep_fatalities_wide <- acled_indep_full %>% 
   select(iso3c:wps_input, fatalities_12m) %>% 
   mutate(wps_input = paste0(wps_input, "_fatalities_12months")) %>% 
@@ -185,6 +187,10 @@ acled_indep_binary_wide <- acled_indep_full %>%
 acled_wide_combined <- full_join(acled_indep_fatalities_wide, acled_indep_count_wide) %>% 
   full_join(acled_indep_binary_wide)
 
+# Join dependent and independent variable data
+
 acled_all <- full_join(acled_full, acled_wide_combined)
+
+## Write out to compressed, tab-delimited file
 
 write_tsv(acled_all, "data/acled_all.txt.gz")
