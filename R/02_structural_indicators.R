@@ -21,9 +21,13 @@ df <- dbGetQuery(con,
   filter(iso3c %in% cs$iso3c) %>% 
   spread(variable_code, value)
 
-latest <- df %>% filter(year_structural == max(year_structural))
-oldest <- df %>% filter(year_structural == min(year_structural))
+## reign
 
-df_full <- left_join(rack, df)
+reign <- read_tsv("/srv/r-common/data/reign.txt") %>% 
+  rename(month_indep = month_event_reign) %>% 
+  select(iso3c:month_indep, anticipation, election_recent, governmentDominantParty:governmentWarlordism)
+
+df_full <- left_join(rack, df) %>% 
+  left_join(reign)
 
 write_tsv(df_full, "data/structural_data.txt.gz")
