@@ -101,6 +101,8 @@ rack <- merge(acled_start, months) %>%
   filter(month_dependent >= month_start) %>% 
   left_join(gid2s)
 
+write_tsv(rack, "data/rack.txt.gz")
+
 ## Join rack with ACLED data, create a binary indicator of conflict with fatalities in ADM2, calculate 12 month variables
 
 acled_full <- left_join(rack, acled_filtered) %>% 
